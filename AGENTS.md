@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # HireLoop
 
-Job/recruitment application built on Next.js 16 (App Router, `src/` directory) with TypeScript, Tailwind CSS v4, shadcn/ui (Base UI), and MongoDB + Better Auth for authentication. Early stage — the app shell and auth stack are set up; most feature pages were not yet written at the time of writing.
+Job/recruitment application built on Next.js 16 (App Router, `src/` directory) with TypeScript, Tailwind CSS v4, shadcn/ui (Base UI), and MongoDB + Better Auth for authentication. Early stage — the app shell, auth stack, and site navbar are set up; most feature pages were not yet written at the time of writing.
 
 ## Commands
 
@@ -27,7 +27,7 @@ There is no test suite or formatting script (no Prettier) configured yet.
 
 - **Next.js 16.4.5** — App Router only, `src/app/` structure. React Compiler is enabled (`reactCompiler: true` in `next.config.ts`) — do not add manual `memo`/`useCallback` optimizations unless profiling shows a need.
 - **React 19.3** with `react-jsx` transform (no manual `import React`).
-- **Tailwind CSS v4** via `@tailwindcss/turbopack` (CSS-first config in `src/app/globals.css`; no `tailwind.config` file). `tw-animate-css` available.
+- **Tailwind CSS v4** via `@tailwindcss/turbopack` (CSS-first config in `src/app/globals.css`; no `tailwind.config` file). `tw-animate-css` available. The loader is also wired explicitly in `next.config.ts` under `turbopack.rules`.
 - **shadcn/ui via Base UI** (`@base-ui/react`, style `base-nova`) — components in `src/components/ui/`, added with `npx shadcn`. Icons: `lucide-react`. Class helper: `cn` from `@/lib/utils`.
 - **Better Auth 1.7** with the MongoDB adapter (`@better-auth/mongo-adapter`, `mongodb` driver v7). Email/password + Google social provider.
 - **TypeScript strict** mode, `@/*` path alias → `./src/*`.
@@ -35,11 +35,14 @@ There is no test suite or formatting script (no Prettier) configured yet.
 ## Key files
 
 - `src/lib/auth.ts` — server-side Better Auth instance (MongoDB adapter, `db("hireloopdb")`).
-- `src/lib/auth-client.ts` — client-side auth client (`better-auth/react`).
+- `src/lib/auth-client.ts` — client-side auth helpers (`better-auth/react`), created as `createAuthClient<typeof auth>()` for type inference; exports `authClient` plus `signIn`/`signUp`/`signOut`/`useSession` from the single configured client (same-origin default).
 - `src/app/api/auth/[...all]/route.ts` — catch-all route handler mounting Better Auth (`toNextJsHandler`); exposes `/api/auth/*` (sign-in, sign-up, session, etc.).
+- `src/components/site-navbar.tsx` — `SiteNavbar` header (dark theme, branded Logo, links to `/jobs`, `/company`, `/pricing`, plus Sign In / Get Started CTAs). Server component, rendered in the root layout on every page.
 - `src/app/globals.css` — Tailwind v4 + shadcn design tokens/CSS variables.
-- `src/components/ui/*` — shadcn components (currently only `button.tsx`).
+- `src/components/ui/*` — shadcn-style components (`button.tsx`, `input.tsx`, `sonner.tsx` toaster wrapper). `src/components/logo.tsx` holds the shared `Logo` (used by navbar + auth pages).
 - `components.json` — shadcn config (`base-nova` style, `neutral` base color, lucide icons).
+
+Routes referenced by the navbar (`/jobs`, `/company`, `/pricing`) do **not** exist yet — creating them is pending work. `/sign-in` and `/sign-up` exist (`src/app/sign-in/page.tsx`, `src/app/sign-up/page.tsx`, rendering client forms from `src/components/auth/`): email/password auth, Google OAuth (which lands on `/auth/redirect` to resolve the session first), and a three-role picker on sign-up (employee/employer/admin, stored as `role` via Better Auth `user.additionalFields`, default `employee`). After auth, users are redirected by role via `getRoleHome` in `src/lib/role-redirect.ts`: employee → `/`, employer → `/employer`, admin → `/admin`. `/employer` and `/admin` are server components guarded by session role (redirect mismatches) with a shared `SignOutButton`; they are placeholders pending real dashboards. Errors/successes across auth flows use sonner toasts (`Toaster` from `src/components/ui/sonner.tsx`, mounted in the root layout). `src/app/page.tsx` renders `Hero` from `src/components/hero.tsx` (badge, headline, job search form linking to `/jobs`, popular-search tags, planet-glow backdrop, and a stats strip).
 
 ## Environment variables
 
@@ -48,7 +51,7 @@ There is no test suite or formatting script (no Prettier) configured yet.
 - `MONGODB_URI` — MongoDB connection string (required by `src/lib/auth.ts`).
 - `BETTER_AUTH_SECRET` — auth signing secret.
 - `BETTER_AUTH_URL` — auth base URL (e.g. `http://localhost:3000` in dev).
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — referenced by `src/lib/auth.ts` but **not yet present in `.env`**; auth startup will fail with `undefined` values until they are added.
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — referenced by `src/lib/auth.ts`; keys exist in `.env` but are empty until real Google OAuth credentials are added (Google sign-in fails at request time until then; email/password works regardless).
 
 ## Conventions
 
