@@ -32,6 +32,8 @@ const DASHBOARD_PATHS = [
   "/dashboard/admin",
   "/dashboard/admin/jobs",
   "/dashboard/admin/users",
+  // Public job board — shows save state for signed-in seekers.
+  "/jobs",
 ];
 
 function refreshDashboard() {
