@@ -1,7 +1,7 @@
 const ROLE_HOME: Record<string, string> = {
-  employee: "/",
-  employer: "/employer",
-  admin: "/admin",
+  employee: "/dashboard",
+  employer: "/dashboard/employer",
+  admin: "/dashboard/admin",
 };
 
 /** Landing path for a user role after authentication. */

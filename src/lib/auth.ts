@@ -1,8 +1,7 @@
 import { betterAuth } from "better-auth";
-import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
-const client = new MongoClient(process.env.MONGODB_URI as string);
-const db = client.db("hireloopdb");
+import { client, db } from "@/lib/db";
+
 export const auth = betterAuth({
   //...
  baseURL: process.env.BETTER_AUTH_URL,
@@ -16,6 +15,13 @@ export const auth = betterAuth({
         required: false,
         defaultValue: "employee",
         input: true,
+      },
+      // Admin-managed only (input: false) — set via the users dashboard.
+      status: {
+        type: "string",
+        required: false,
+        defaultValue: "active",
+        input: false,
       },
     },
   },
